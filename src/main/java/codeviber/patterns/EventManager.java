@@ -1,0 +1,45 @@
+package codeviber.patterns;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+public class EventManager {
+    Map<String, List<EventListener>> listeners = new HashMap<>();
+    ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+
+    public EventManager(String... operations) {
+        for (String operation : operations) {
+            this.listeners.put(operation, new ArrayList<>());
+        }
+    }
+
+    public void subscribe(String eventType, EventListener listener) {
+        List<EventListener> users = listeners.get(eventType);
+        users.add(listener);
+    }
+
+    public void unsubscribe(String eventType, EventListener listener) {
+        List<EventListener> users = listeners.get(eventType);
+        users.remove(listener);
+    }
+
+    public void notify(String eventType, File file) {
+        Object result = null;
+
+        List<EventListener> users = listeners.get(eventType);
+        for (EventListener listener : users) {
+            Future<Boolean> object = executor.submit(() -> {
+                listener.update(eventType, file);
+            }, true);
+        }
+    }
+
+
+}
